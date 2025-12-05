@@ -1,0 +1,154 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Custom fields
+  favoriteTeamId String?
+  favoriteTeam   Team?   @relation(fields: [favoriteTeamId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@id([identifier, token])
+}
+
+// --- WFN Domain Models ---
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  shortName String
+  logo      String?
+  color     String?  // Hex code
+  
+  leagueId  String
+  league    League   @relation(fields: [leagueId], references: [id])
+  
+  players   Player[]
+  fans      User[]
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model League {
+  id        String   @id @default(cuid())
+  name      String
+  country   String
+  logo      String?
+  
+  teams     Team[]
+  matches   Match[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  position  String
+  number    Int?
+  photo     String?
+  
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  
+  // Smart Stats
+  formRating String? // "HOT", "NORMAL", "COLD"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Match {
+  id        String   @id @default(cuid())
+  date      DateTime
+  status    String   // "SCHEDULED", "LIVE", "FINISHED"
+  
+  homeTeamId String
+  homeTeam   Team    @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeScore  Int?
+  
+  awayTeamId String
+  awayTeam   Team    @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayScore  Int?
+  
+  leagueId   String
+  league     League  @relation(fields: [leagueId], references: [id])
+  
+  // Real-time data
+  minute     Int?
+  momentum   Json?   // Stored as JSON for graphs
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsItem {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  summary   String?
+  content   String   // Markdown or HTML
+  image     String?
+  type      String   // "NEWS", "EXPLAINER", "RECAP"
+  
+  tags      String[]
+  
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
