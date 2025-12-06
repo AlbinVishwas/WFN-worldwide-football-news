@@ -10,6 +10,6 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.ts",
   },
   datasource: {
-    url: env("DATABASE_URL"),
+    url: env("postgresql://neondb_owner:npg_1k2VxilBrEHc@ep-summer-recipe-a46102zv-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"),
   },
 });
